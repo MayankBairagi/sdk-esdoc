@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>FreeBird JS SDK</title>
+</head>
+
+<body>
+
+    <h1></h1>
+
+    <div id="output"></div>
+
+    <script src="./sdk.js"></script>
+    <script>
+        var date = dataObjects.date(2016, 04, 04)
+        var flight = dataObjects.flight('AA', 124, date);
+        var passengerCounts = dataObjects.passengerCounts(1, 2, 0, 0, 0);
+        var data = dataObjects.data({
+            "key1": "val1",
+            "kye2": "val2"
+        });
+        var leg = dataObjects.leg('aircraft', '2016-04-04', '2016-04-04', 'ORD', 'LAX',
+            'operatingDisclosure', 'changePlane', data);
+        var segment = dataObjects.segment(10, flight, 'cabin', 'bookingCode', 'bookingCodeCount', data, [leg]);
+        var slice = dataObjects.slices(10, [segment]);
+        var trip = dataObjects.trip(true, passengerCounts, data, [slice]);
+
+        var user = 'userName',
+            pass = 'password';
+        var authorizationBasic = user + ':' + pass;
+
+
+        // getting access token
+
+        var accessToken = "";
+        var headerChange = "noChange";
+        fBird.get('/v1/authenticate', authorizationBasic)
+            .then(function(token) {
+                console.log('Authorization result', token);
+                accessToken = token.message;
+                headerChange = "change"
+                return fBird.post('/v1/pricing', trip, accessToken, headerChange)
+            }).then(function(result) {
+                console.log('Pricing API result ', result);
+                headerChange = "change";
+                var dateOfBirth = dataObjects.dateOfBirth(1990,1,1);
+                    var personInfo = dataObjects.personInfo('male','string','string','string',dateOfBirth,'string','string',true,true,true,true);
+                    var tripdata = dataObjects.tripData(result.data.tripId,[personInfo])
+                    var purchase = dataObjects.purchaseData(result.data.id,'string','GOLD',tripdata,'pciTransactionId',data);
+                return fBird.post('/v1/purchase', purchase, accessToken, headerChange)
+
+            }).then(function(result) {
+                console.log('Purchase API result ', result);
+            }).catch(function(err) {
+                console.log('WE GOT ERROR', err);
+            })
+    </script>
+</body>
+
+</html>
